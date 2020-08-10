@@ -35,8 +35,8 @@ public abstract with sharing class ApplicationTracer {
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++=
     // get trace status
     static final boolean traceOn = ((IApplicationConfiguration)CustomSettingResourceMgr.customSetting()).isTracing();
-    // we are 2 down in the stack
-    static final Integer STACK_TRACE_DOWN = 2;
+    // where are down in the stack
+    static final Integer STACK_TRACE_DOWN = 7;
     // last written message
     @TestVisible
     static String lastMessage = null;
@@ -187,17 +187,19 @@ public abstract with sharing class ApplicationTracer {
     @TestVisible
     private static string popStack(string trace) {
         string popTrace = '';
-
+ 
         if ( !string.isBlank(trace) ) {
             List<String> lines = trace.split('\\n');
             // 'STACK_TRACE_DOWN'  in the stack
             integer location = lines.size()-STACK_TRACE_DOWN;
+    
             if ( location < 0 ) {
                 location = 0;
             }
+
             popTrace = lines[location]!=null?lines[location]:'';
         }
-         
+        
         return popTrace;
     } // end of popStack
 

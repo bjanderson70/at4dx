@@ -28,6 +28,8 @@ public abstract class ApplicationSObjectDomain
     extends fflib_SObjectDomain
     implements IApplicationSObjectDomain
 {
+    
+
     public IDomainProcessCoordinator getDomainProcessCoordinator()
     {
         return (IDomainProcessCoordinator)di_Injector.Org.getInstance(IDomainProcessCoordinator.class, this);
@@ -35,52 +37,92 @@ public abstract class ApplicationSObjectDomain
 
     public ApplicationSObjectDomain(List<SObject> records) {
         super(records);
+        super.Configuration.enableTriggerState();
+        // Do the triggers fire?
+        // (note, this will require a check within each event as fflib will re-enable the trigger state.
+        //  It is not done at the 'IDomainProcessCoordinator' as this is an abstract class that can be inherited
+        //  ; thus, we need to ensure all children are blocked as well! )
+        this.triggerDisabled = this.determineIfTriggerEventsFire();
         // Disable the base class CRUD checking in preference to explicit checking elsewhere
         Configuration.disableTriggerCRUDSecurity();
+
+    }
+    /**
+     * domainConfiguration 
+     * @description the domain configuration ( for children)
+     * @return   IDomainConfiguration domain configuration
+     */ 
+    public IDomainConfiguration domainConfiguration() {
+        return (IDomainConfiguration)CustomSettingResourceMgr.customSetting();
+    }
+      /**
+     * applicationConfiguration 
+     * @description the application configuration ( for children)
+     * @return   IApplicationConfiguration application configuration
+     */ 
+    public IApplicationConfiguration applicationConfiguration() {
+        return (IApplicationConfiguration)CustomSettingResourceMgr.customSetting();
     }
     /*
      *  Setup the hooks for all of the various trigger contexts to process domain logic injections, if needed.
      */
     public virtual override void handleBeforeInsert()
     {
-        super.handleBeforeInsert();
-        this.getDomainProcessCoordinator().processDomainLogicInjections( DomainProcessConstants.PROCESS_CONTEXT.TriggerExecution, System.TriggerOperation.Before_Insert );
+
+        if ( this.triggerDisabled==false ) {         
+            super.handleBeforeInsert();
+            this.getDomainProcessCoordinator().processDomainLogicInjections( DomainProcessConstants.PROCESS_CONTEXT.TriggerExecution, System.TriggerOperation.Before_Insert );
+        }
     }
 
     public virtual override void handleBeforeUpdate(Map<Id,SObject> existingRecords)
     {
-        super.handleBeforeUpdate( existingRecords );
-        this.getDomainProcessCoordinator().processDomainLogicInjections( DomainProcessConstants.PROCESS_CONTEXT.TriggerExecution, System.TriggerOperation.Before_Update, existingRecords );
+        if ( this.triggerDisabled==false ) { 
+            super.handleBeforeUpdate( existingRecords );
+            this.getDomainProcessCoordinator().processDomainLogicInjections( DomainProcessConstants.PROCESS_CONTEXT.TriggerExecution, System.TriggerOperation.Before_Update, existingRecords );
+        }
     }
+
 
     public virtual override void handleBeforeDelete()
     {
-        super.handleBeforeDelete();
-        this.getDomainProcessCoordinator().processDomainLogicInjections( DomainProcessConstants.PROCESS_CONTEXT.TriggerExecution, System.TriggerOperation.Before_Delete );
+        if ( this.triggerDisabled==false ) { 
+            super.handleBeforeDelete();
+            this.getDomainProcessCoordinator().processDomainLogicInjections( DomainProcessConstants.PROCESS_CONTEXT.TriggerExecution, System.TriggerOperation.Before_Delete );
+        }
     }
 
     public virtual override void handleAfterInsert()
     {
-        super.handleAfterInsert();
-        this.getDomainProcessCoordinator().processDomainLogicInjections( DomainProcessConstants.PROCESS_CONTEXT.TriggerExecution, System.TriggerOperation.After_Insert );
+        if ( this.triggerDisabled==false ) { 
+            super.handleAfterInsert();
+            this.getDomainProcessCoordinator().processDomainLogicInjections( DomainProcessConstants.PROCESS_CONTEXT.TriggerExecution, System.TriggerOperation.After_Insert );
+        }
     }
+
 
     public virtual override void handleAfterUpdate(Map<Id,SObject> existingRecords)
     {
-        super.handleAfterUpdate( existingRecords );
-        this.getDomainProcessCoordinator().processDomainLogicInjections( DomainProcessConstants.PROCESS_CONTEXT.TriggerExecution, System.TriggerOperation.After_Update, existingRecords );
+        if ( this.triggerDisabled==false ) { 
+            super.handleAfterUpdate( existingRecords );
+            this.getDomainProcessCoordinator().processDomainLogicInjections( DomainProcessConstants.PROCESS_CONTEXT.TriggerExecution, System.TriggerOperation.After_Update, existingRecords );
+        }
     }
 
     public virtual override void handleAfterDelete()
     {
-        super.handleAfterDelete();
-        this.getDomainProcessCoordinator().processDomainLogicInjections( DomainProcessConstants.PROCESS_CONTEXT.TriggerExecution, System.TriggerOperation.After_Delete );
+        if ( this.triggerDisabled==false ) { 
+            super.handleAfterDelete();
+            this.getDomainProcessCoordinator().processDomainLogicInjections( DomainProcessConstants.PROCESS_CONTEXT.TriggerExecution, System.TriggerOperation.After_Delete );
+        }
     }
 
     public virtual override void handleAfterUndelete()
     {
-        super.handleAfterUndelete();
-        this.getDomainProcessCoordinator().processDomainLogicInjections( DomainProcessConstants.PROCESS_CONTEXT.TriggerExecution, System.TriggerOperation.After_Undelete );
+        if ( this.triggerDisabled==false ) { 
+            super.handleAfterUndelete();
+            this.getDomainProcessCoordinator().processDomainLogicInjections( DomainProcessConstants.PROCESS_CONTEXT.TriggerExecution, System.TriggerOperation.After_Undelete );
+        }
     }
 
 
@@ -92,4 +134,32 @@ public abstract class ApplicationSObjectDomain
     {
         return this.SObjectDescribe;
     }
+
+    /**
+     * triggerDisabled
+     * @description Trigger state from the custom setting ( allow children to change)
+     */ 
+    @TestVisible
+    public Boolean triggerDisabled { get; protected set;}
+    /**
+     * determineIfTriggerEventsFire 
+     * @description check the custom setting ( user/profile) to determine state
+     * @return true, if ALL trigger events are disabled
+     */ 
+    protected Boolean determineIfTriggerEventsFire(){
+        Boolean isDisabled = false;
+        // setup information for domain configuration
+        IDomainConfiguration domain = this.domainConfiguration();
+        String name = this.getSObjectDescribe().getName();
+        // set the trigger status from the custom setting ( to disable children)
+        isDisabled= domain.isTriggerDisabled(name);
+        // disable all trigger events within fflib
+        if ( isDisabled  ){
+            ApplicationTracer.trace('Trigger disabled for domain name: ' + name );
+            // bec/ fflib will re-instate the tirgger events; unfortunately, we have to check ( per event :-()!!
+            // this does not disable as expected .... fflib_SObjectDomain.getTriggerEvent(Type.forName(name)).disableAll();
+        }
+        return isDisabled;
+    }// end of determineIfTriggerEventsFire
+
 }
