@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>disableTriggersBySObjectName__c</fullName>
+    <description>A list of SObject Names ( comma, semi-colon, whitespace or new-line delimited which will be disabled. Below are 3 examples,
+   (1) Account, Contact, Lead
+   (2) All
+   (3) Account
+
+Note, to disable ALL SObject Triggers, use &apos;All&apos;. Names are case IN-SENSITIVE.</description>
+    <externalId>false</externalId>
+    <inlineHelpText>A list of SObject Names ( comma,semi-colon,whitespace or newline delimited which will be disabled. Below are 3 examples,
+   (1) Account, Contact, Lead
+   (2) All
+   (3) Account
+Note, to disable ALL SObject Triggers, use &apos;All&apos;. Names are case IN-SENSIT</inlineHelpText>
+    <label>Disable Triggers By SObject Name</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>TextArea</type>
+</CustomField>

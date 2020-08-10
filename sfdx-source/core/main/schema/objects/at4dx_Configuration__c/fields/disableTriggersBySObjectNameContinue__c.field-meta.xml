@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>disableTriggersBySObjectNameContinue__c</fullName>
+    <description>This is overflow in the event one needs additional names. Please note, &apos;All&apos; indicates no sobject triggers will fire</description>
+    <externalId>false</externalId>
+    <inlineHelpText>This is overflow in the event one needs additional names. Please note, &apos;All&apos; indicates no sobject triggers will fire</inlineHelpText>
+    <label>Disable Triggers By SObject Name Cont</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>TextArea</type>
+</CustomField>
